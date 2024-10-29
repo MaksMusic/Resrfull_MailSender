@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: MailSender
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/sender_db
+
+  mail:
+    host: smtp.yandex.ru
+    port: 587
+    username: zxvendetta@yandex.ru
+    password: jdjapoyvvwkysjkn
