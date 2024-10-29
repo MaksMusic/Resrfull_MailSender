@@ -15,5 +15,5 @@ spring:
   mail:
     host: smtp.yandex.ru
     port: 587
-    username: zxvendetta@yandex.ru
+    username: hide
     password: hide
