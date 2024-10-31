@@ -2,6 +2,9 @@ package org.example.mailsender.service;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.example.mailsender.exceptions.CodeExpiredException;
+import org.example.mailsender.exceptions.IllegalCodeValueException;
+import org.example.mailsender.exceptions.TimeExpiredException;
 import org.example.mailsender.mapper.UserMapper;
 import org.example.mailsender.model.dto.AwaitingUser;
 import org.example.mailsender.model.entity.User;
@@ -52,16 +55,16 @@ public class RegService {
         AwaitingUser awaitingUser = awaitingUsers.get(mail);
 
         if (awaitingUser == null) {
-            throw new IllegalArgumentException("Code expired");
+            throw new CodeExpiredException("Code expired");
         }
 
         if (!awaitingUser.getCode().equals(code)) {
-            throw new IllegalArgumentException("Code expired(код не совпадает)");
+            throw new IllegalCodeValueException("код не совпадает");
         }
 
         if (awaitingUser.isExpiredCode(7)) {
             awaitingUsers.remove(mail);
-            throw new IllegalArgumentException("Time expired");
+            throw new TimeExpiredException("Time expired");
         }
 
         User user = userMapper.toUser(awaitingUser.getUserRegDto());

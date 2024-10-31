@@ -1,5 +1,9 @@
 package org.example.mailsender.service;
 
+import org.example.mailsender.exceptions.CodeExpiredException;
+import org.example.mailsender.exceptions.IllegalCodeValueException;
+import org.example.mailsender.exceptions.TimeExpiredException;
+import org.example.mailsender.mapper.UserMapper;
 import org.example.mailsender.model.dto.AwaitingUser;
 import org.example.mailsender.model.dto.UserRegDto;
 import org.example.mailsender.model.entity.User;
@@ -10,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,11 +28,14 @@ class RegServiceTest {
     UserRepository userRepository;
     @Mock
     MailService mailService;
+    @Mock
+    UserMapper userMapper;
 
     @InjectMocks
     private RegService regService;
 
     private UserRegDto userRegDto;
+    private AwaitingUser awaitingUser;
 
     @BeforeEach
     void setUp() {
@@ -39,6 +46,11 @@ class RegServiceTest {
         userRegDto.setPassword("password");
         userRegDto.setPasswordRepeat("password");
 
+        awaitingUser = new AwaitingUser();
+        awaitingUser.setUserRegDto(userRegDto);
+        awaitingUser.setCode("123456");
+        awaitingUser.setCreatedAt(LocalDateTime.now());
+        regService.getAwaitingUsers().put(userRegDto.getEmail(), awaitingUser);
     }
 
     @AfterEach
@@ -82,14 +94,39 @@ class RegServiceTest {
 
         AwaitingUser awaitingUser = regService.getAwaitingUsers().get(userRegDto.getEmail());
 
-        assertNotNull(awaitingUser,"Awaiting user should be created");
-        assertEquals(userRegDto,awaitingUser.getUserRegDto(),"user reg dto should match");
-        assertNotNull(awaitingUser.getCode(),"code should be generated");
-        assertEquals(userRegDto.getEmail(),"test@test.com");
+        assertNotNull(awaitingUser, "Awaiting user should be created");
+        assertEquals(userRegDto, awaitingUser.getUserRegDto(), "user reg dto should match");
+        assertNotNull(awaitingUser.getCode(), "code should be generated");
+        assertEquals(userRegDto.getEmail(), "test@test.com");
 
-        verify(mailService,times(1)).sendEmail(eq(userRegDto.getEmail()),
-                eq("zxVendetta@yandex.ru"),
+        verify(mailService, times(1)).sendEmail(eq(userRegDto.getEmail()),
+                eq("MaksMusic05@yandex.ru"),
                 eq("Confirmation"),
                 anyString());
+    }
+
+    @Test
+    void confirmEmail() {
+        // Настройка
+        User mockUser = new User();
+        when(userMapper.toUser(any())).thenReturn(mockUser);
+        when(userRepository.save(any(User.class))).thenReturn(mockUser); // Мокаем метод save
+
+        // Выполнение
+        User result = regService.confirmEmail("123456", "test@test.com");
+
+        // Проверка
+        assertNotNull(result);
+        assertTrue(result.isActive());
+        verify(userRepository).save(any(User.class));
+
+        assertThrows(IllegalCodeValueException.class, () -> regService.confirmEmail("ne verniy kod", "test@test.com"));
+
+        assertThrows(CodeExpiredException.class, () -> regService.confirmEmail("123456", "ne verni email"));
+
+        awaitingUser.setCreatedAt(LocalDateTime.now().minusMinutes(8));
+        assertThrows(TimeExpiredException.class, () -> regService.confirmEmail("123456", "test@test.com"));
+
+        assertNull(regService.getAwaitingUsers().get("test@test.com"));
     }
 }
