@@ -1,8 +1,10 @@
 package org.example.mailsender.exceptions;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-public class ExceptionsHandler {
+@RestControllerAdvice
+public class GlobalExceptionHandler {
     @ExceptionHandler(CodeExpiredException.class)
     public String handleCodeExpiredException(CodeExpiredException e) {
         return e.getMessage();
