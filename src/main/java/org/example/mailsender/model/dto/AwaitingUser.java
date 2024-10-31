@@ -13,4 +13,9 @@ public class AwaitingUser {
     private UserRegDto userRegDto;
     private String code;
     private LocalDateTime createdAt;
+
+
+    public boolean isExpiredCode(int minutes){
+        return createdAt.plusMinutes(minutes).isBefore(LocalDateTime.now());
+    }
 }

@@ -2,6 +2,7 @@ package org.example.mailsender.service;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.example.mailsender.mapper.UserMapper;
 import org.example.mailsender.model.dto.AwaitingUser;
 import org.example.mailsender.model.entity.User;
 import org.example.mailsender.model.dto.UserRegDto;
@@ -22,6 +23,7 @@ public class RegService {
     private final UserRepository userRepository;
     private final Map<String, AwaitingUser> awaitingUsers = new HashMap<>();
     private final MailService mailService;
+    private final UserMapper userMapper;
 
     public boolean isNotActive(UserRegDto userRegDto) {
         Optional<User> byEmail = userRepository.findByEmail(userRegDto.getEmail());
@@ -40,9 +42,31 @@ public class RegService {
 
         awaitingUsers.put(userRegDto.getEmail(), awaitingUser);
 
-        mailService.sendEmail(userRegDto.getEmail(), "zxVendetta@yandex.ru"
+        mailService.sendEmail(userRegDto.getEmail(), "MaksMusic05@yandex.ru"
                 ,"Confirmation",awaitingUser.getCode());
 
+    }
+
+
+    public User confirmEmail(String code, String mail){
+        AwaitingUser awaitingUser = awaitingUsers.get(mail);
+
+        if (awaitingUser == null) {
+            throw new IllegalArgumentException("Code expired");
+        }
+
+        if (!awaitingUser.getCode().equals(code)) {
+            throw new IllegalArgumentException("Code expired(код не совпадает)");
+        }
+
+        if (awaitingUser.isExpiredCode(7)) {
+            awaitingUsers.remove(mail);
+            throw new IllegalArgumentException("Time expired");
+        }
+
+        User user = userMapper.toUser(awaitingUser.getUserRegDto());
+        user.setActive(true);
+        return userRepository.save(user);
     }
 
 
