@@ -45,7 +45,7 @@ public class RegService {
 
         awaitingUsers.put(userRegDto.getEmail(), awaitingUser);
 
-        mailService.sendEmail(userRegDto.getEmail(), "MaksMusic05@yandex.ru"
+        mailService.sendEmail(userRegDto.getEmail(), "**@yandex.ru"
                 ,"Confirmation",awaitingUser.getCode());
 
     }
